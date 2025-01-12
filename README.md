@@ -20,7 +20,3 @@ A simple React and Next.js-based application for managing budgets and expenses. 
 
 4. **Dynamic Category Dropdown**:
     - Populates categories dynamically from an API endpoint (`/api/v1/categories`).
-    - Includes mock data during development.
-
-5. **Mock Data in Development**:
-    - Simulated mock data for API calls to facilitate development.
