@@ -1,5 +1,5 @@
 import React from "react";
-import { Budget } from "../../lib/definitions";
+import { Budget } from "../lib/definitions";
 
 interface BudgetProps {
     budget: Budget | null;

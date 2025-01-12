@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Expense } from "../../lib/definitions";
+import { Expense } from "../lib/definitions";
 
 interface ExpensesProps {
     expenses: Expense[];
