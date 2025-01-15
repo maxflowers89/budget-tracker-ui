@@ -1,18 +1,17 @@
 import { Budget, Expense } from "./definitions";
 import { getTodayDateMinusYears, parseError } from "./utils";
 
-export async function addBudget(projectId: number, amount: number): Promise<void> {
+export async function addBudget(projectId: number, budget: Budget): Promise<Budget> {
     const response = await fetch(`http://localhost:8080/api/v1/budget?projectId=${projectId}`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify(budget),
     });
 
     if (!response.ok) {
-        const errorMessage = await parseError(response);
-        throw new Error(errorMessage);
+        throw new Error(await parseError(response));
     }
 
     return response.json();
@@ -44,7 +43,7 @@ export async function fetchExpenses(
     return response.json();
 }
 
-export async function addExpenses(budgetId: string, newExpenses: Expense[]): Promise<void> {
+export async function addExpenses(budgetId: string, newExpenses: Expense[]): Promise<Expense[]> {
     const response = await fetch(`http://localhost:8080/api/v1/expenses?budgetId=${budgetId}`, {
         method: "POST",
         headers: {

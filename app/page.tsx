@@ -1,121 +1,88 @@
 'use client'
 
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 import BudgetComponent from "./ui/Budget";
 import ExpensesComponent from "./ui/Expenses";
-import { fetchBudget, fetchExpenses, addExpenses, fetchCategories, addBudget } from "./lib/data";
-import { Budget, Expense } from "./lib/definitions";
+import {addBudget, addExpenses, fetchBudget, fetchCategories, fetchExpenses} from "./lib/data";
+import {Budget, Expense} from "./lib/definitions";
 
 const BudgetRoute = () => {
-    const [budget, setBudget] = useState<Budget | null>(null);
+    const emptyBudget = {id: null, amount: 0};
+    const [budget, setBudget] = useState<Budget>(emptyBudget);
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [newBudgetAmount, setNewBudgetAmount] = useState<number | null>(null);
 
-    // Fetch the budget
-    const getBudget = async () => {
+    const loadBudgetAndExpenses = async () => {
         try {
-            const data = await fetchBudget(1); // Fetch budget for projectId=1
-            setBudget(data);
-            return data;
+            const retrievedBudget = await fetchBudget(1);
+            setBudget(retrievedBudget);
+
+            if (retrievedBudget.id) {
+                const today = new Date().toISOString().split("T")[0];
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(new Date().getFullYear() - 1);
+
+                await getExpenses(retrievedBudget.id, oneYearAgo.toISOString().split("T")[0], today);
+            }
         } catch (err: any) {
             setError(err.message || "Failed to load budget.");
-            return null;
+            return emptyBudget;
         }
     };
 
-    // Fetch expenses based on budgetId
-    const loadExpenses = async (budgetId: string, from: string, to: string) => {
+    const getExpenses = async (budgetId: string, from: string, to: string) => {
         try {
-            const data = await fetchExpenses(budgetId, from, to);
-            setExpenses(data);
+            setExpenses(await fetchExpenses(budgetId, from, to));
         } catch (err: any) {
             setError(err.message || "Failed to load expenses.");
         }
     };
 
-    // Add a new budget
     const handleAddBudget = async () => {
         if (newBudgetAmount === null || newBudgetAmount <= 0) {
-            setError("Please enter a valid budget amount.");
-            return;
+            return alert("Please enter a valid budget amount.");
         }
 
         try {
-            // Call addBudget from data.ts
-            await addBudget(1, newBudgetAmount);
-
-            // Reload budget and expenses
-            const updatedBudget = await getBudget();
-            if (updatedBudget && updatedBudget.id) {
-                const today = new Date().toISOString().split("T")[0];
-                const oneYearAgo = new Date();
-                oneYearAgo.setFullYear(new Date().getFullYear() - 1);
-                await loadExpenses(updatedBudget.id, oneYearAgo.toISOString().split("T")[0], today);
-            }
-
-            setNewBudgetAmount(null); // Reset the input field
+            setBudget(await addBudget(1, {...budget, amount: newBudgetAmount}));
+            setNewBudgetAmount(null);
         } catch (err: any) {
             setError(err.message || "Failed to add budget.");
         }
     };
 
     useEffect(() => {
-        const today = new Date().toISOString().split("T")[0];
-        const oneYearAgo = new Date();
-        oneYearAgo.setFullYear(new Date().getFullYear() - 1);
-
-        const loadBudgetAndExpenses = async () => {
-            const budgetData = await getBudget();
-            if (budgetData && budgetData.id) {
-                await loadExpenses(budgetData.id, oneYearAgo.toISOString().split("T")[0], today);
-            }
-        };
-
         loadBudgetAndExpenses();
     }, []);
 
     return (
-        <main style={{ fontFamily: "Arial, sans-serif", textAlign: "center", marginTop: "50px" }}>
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            <div>
-                <h2>Add Budget</h2>
-                <input
-                    type="number"
-                    value={newBudgetAmount ?? ""}
-                    onChange={(e) => setNewBudgetAmount(parseFloat(e.target.value))}
-                    placeholder="Enter budget amount"
-                    style={{ marginRight: "10px" }}
-                />
-                <button
-                    onClick={handleAddBudget}
-                    style={{
-                        padding: "5px 10px",
-                        cursor: "pointer",
-                    }}
-                >
-                    Add Budget
-                </button>
-            </div>
-            <BudgetComponent budget={budget} />
+        <main style={{fontFamily: "Arial, sans-serif", textAlign: "center", marginTop: "50px"}}>
+            {error && <p style={{color: "red"}}>{error}</p>}
+            <BudgetComponent
+                budget={budget}
+                newBudgetAmount={newBudgetAmount}
+                setNewBudgetAmount={setNewBudgetAmount}
+                handleAddBudget={handleAddBudget}/>
             <ExpensesComponent
                 expenses={expenses}
                 onFilter={async (from, to) => {
-                    if (budget && budget.id) {
-                        await loadExpenses(budget.id, from, to);
+                    if (budget.id) {
+                        await getExpenses(budget.id, from, to);
                     }
                 }}
                 onAddExpense={async (newExpenses) => {
                     try {
-                        if (budget && budget.id) {
-                            await addExpenses(budget.id, newExpenses);
-                            setExpenses((prev) => [...prev, ...newExpenses]);
+                        if (budget.id) {
+                            const addedExpenses = await addExpenses(budget.id, newExpenses);
+                            setExpenses((prev) => [...prev, ...addedExpenses]);
                         }
                     } catch (err: any) {
                         setError(err.message || "Failed to add expenses.");
                     }
                 }}
                 fetchCategories={fetchCategories}
+                setError={setError}
             />
         </main>
     );
