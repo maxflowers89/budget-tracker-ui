@@ -9,6 +9,7 @@ import {Budget, Expense} from "./lib/definitions";
 const BudgetRoute = () => {
     const emptyBudget = {id: null, amount: 0};
     const [budget, setBudget] = useState<Budget>(emptyBudget);
+    const [remainingBudget, setRemainingBudget] = useState<Budget>(budget);
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [newBudgetAmount, setNewBudgetAmount] = useState<number | null>(null);
@@ -23,7 +24,8 @@ const BudgetRoute = () => {
                 const oneYearAgo = new Date();
                 oneYearAgo.setFullYear(new Date().getFullYear() - 1);
 
-                await getExpenses(retrievedBudget.id, oneYearAgo.toISOString().split("T")[0], today);
+                const expenses =await getExpenses(retrievedBudget.id, oneYearAgo.toISOString().split("T")[0], today);
+                setRemainingBudget({ ...remainingBudget, amount: retrievedBudget.amount - expenses.reduce((sum, expense) => sum + expense.amount, 0)});
             }
         } catch (err: any) {
             setError(err.message || "Failed to load budget.");
@@ -33,9 +35,12 @@ const BudgetRoute = () => {
 
     const getExpenses = async (budgetId: string, from: string, to: string) => {
         try {
-            setExpenses(await fetchExpenses(budgetId, from, to));
+            const expenses = await fetchExpenses(budgetId, from, to);
+            setExpenses(expenses);
+            return expenses
         } catch (err: any) {
             setError(err.message || "Failed to load expenses.");
+            return [];
         }
     };
 
@@ -54,13 +59,14 @@ const BudgetRoute = () => {
 
     useEffect(() => {
         loadBudgetAndExpenses();
-    }, []);
+    }, [expenses]);
 
     return (
         <main style={{fontFamily: "Arial, sans-serif", textAlign: "center", marginTop: "50px"}}>
             {error && <p style={{color: "red"}}>{error}</p>}
             <BudgetComponent
                 budget={budget}
+                remainingBudget={remainingBudget}
                 newBudgetAmount={newBudgetAmount}
                 setNewBudgetAmount={setNewBudgetAmount}
                 handleAddBudget={handleAddBudget}/>

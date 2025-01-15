@@ -3,6 +3,7 @@ import { Budget } from "../lib/definitions";
 
 interface BudgetComponentProps {
     budget: Budget;
+    remainingBudget: Budget;
     newBudgetAmount: number | null;
     setNewBudgetAmount: (amount: number | null) => void;
     handleAddBudget: () => Promise<void>;
@@ -10,6 +11,7 @@ interface BudgetComponentProps {
 
 const BudgetComponent: React.FC<BudgetComponentProps> = ({
                                                              budget,
+                                                             remainingBudget,
                                                              newBudgetAmount,
                                                              setNewBudgetAmount,
                                                              handleAddBudget,
@@ -35,6 +37,7 @@ const BudgetComponent: React.FC<BudgetComponentProps> = ({
             </button>
 
             <p>Budget: {budget ? budget.amount.toFixed(2) + " €" : "Loading..."}</p>
+            <p>Remaining Budget: {remainingBudget ? remainingBudget.amount.toFixed(2) + " €" : "Loading..."}</p>
         </div>
     );
 };
