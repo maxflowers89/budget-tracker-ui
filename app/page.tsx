@@ -24,8 +24,7 @@ const BudgetRoute = () => {
                 const oneYearAgo = new Date();
                 oneYearAgo.setFullYear(new Date().getFullYear() - 1);
 
-                const expenses =await getExpenses(retrievedBudget.id, oneYearAgo.toISOString().split("T")[0], today);
-                setRemainingBudget({ ...remainingBudget, amount: retrievedBudget.amount - expenses.reduce((sum, expense) => sum + expense.amount, 0)});
+                await getExpenses(retrievedBudget.id, oneYearAgo.toISOString().split("T")[0], today);
             }
         } catch (err: any) {
             setError(err.message || "Failed to load budget.");
@@ -50,7 +49,9 @@ const BudgetRoute = () => {
         }
 
         try {
-            setBudget(await addBudget(1, {...budget, amount: newBudgetAmount}));
+            const retrievedBudget = await addBudget(1, {...budget, amount: newBudgetAmount})
+            setBudget(retrievedBudget);
+            setRemainingBudget({ ...remainingBudget, amount: retrievedBudget.amount - expenses.reduce((sum, expense) => sum + expense.amount, 0)});
             setNewBudgetAmount(null);
         } catch (err: any) {
             setError(err.message || "Failed to add budget.");
@@ -59,6 +60,10 @@ const BudgetRoute = () => {
 
     useEffect(() => {
         loadBudgetAndExpenses();
+    }, []);
+
+    useEffect(() => {
+        setRemainingBudget({ ...remainingBudget, amount: budget.amount - expenses.reduce((sum, expense) => sum + expense.amount, 0)});
     }, [expenses]);
 
     return (

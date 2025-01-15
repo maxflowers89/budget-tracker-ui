@@ -33,7 +33,7 @@ const BudgetComponent: React.FC<BudgetComponentProps> = ({
                     cursor: "pointer",
                 }}
             >
-                Add Budget
+                Add/Update Budget
             </button>
 
             <p>Budget: {budget ? budget.amount.toFixed(2) + " €" : "Loading..."}</p>
